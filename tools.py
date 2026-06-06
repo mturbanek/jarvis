@@ -474,18 +474,19 @@ def execute_tool(name: str, args: dict) -> str:
                         "Install flameshot for GNOME Wayland support: "
                         "sudo apt install flameshot"
                     )
-                # Scale to 1280px wide — good enough for OCR, much faster than 4K
+                # Scale to 1920px wide — preserves enough detail for small UI text
+                # while keeping tesseract runtime to a few seconds.
                 scaled = os.path.join(tmp, "scaled.png")
                 img = Image.open(screenshot)
-                if img.width > 1280:
-                    ratio = 1280 / img.width
-                    img = img.resize((1280, int(img.height * ratio)), Image.LANCZOS)
+                if img.width > 1920:
+                    ratio = 1920 / img.width
+                    img = img.resize((1920, int(img.height * ratio)), Image.LANCZOS)
                 img.save(scaled)
 
                 # Run tesseract with an explicit thread-based kill so the deadline
                 # is enforced regardless of pipe-drain behaviour after timeout.
                 proc = subprocess.Popen(
-                    ["tesseract", scaled, "stdout", "--psm", "11"],
+                    ["tesseract", scaled, "stdout"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.DEVNULL,
                 )

@@ -1,0 +1,7 @@
+anthropic
+faster-whisper
+sounddevice
+numpy
+edge-tts
+pynput
+psutil

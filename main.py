@@ -11,6 +11,7 @@ warnings.filterwarnings(
 )
 
 import math
+import os
 import re
 import subprocess
 import sys
@@ -153,6 +154,7 @@ class JarvisApp(Gtk.Application):
         self._session_memory = ""
         self._ai = JarvisAI()
         self.overlay: "JarvisOverlay | None" = None
+        self._tray_proc: "subprocess.Popen | None" = None
 
     # ── GTK lifecycle ──
 
@@ -171,7 +173,30 @@ class JarvisApp(Gtk.Application):
         stt_prewarm()
         threading.Thread(target=self._hotkey_thread, daemon=True).start()
         threading.Thread(target=self._gather_startup_context, daemon=True).start()
+        self._launch_tray()
         print(f"JARVIS ready.  Press {HOTKEY.upper()} to activate.")
+
+    # ── tray icon ──
+
+    def _launch_tray(self) -> None:
+        tray_script = pathlib.Path(__file__).parent / "tray.py"
+        if not tray_script.exists():
+            return
+        try:
+            self._tray_proc = subprocess.Popen(
+                [sys.executable, str(tray_script), str(os.getpid())],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            # SIGUSR1 from the tray icon → behave exactly like Ctrl+J
+            GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGUSR1,
+                                 lambda: GLib.idle_add(self._trigger) or True)
+        except Exception as e:
+            print(f"[JARVIS] Tray icon failed to start: {e}")
+
+    def _stop_tray(self) -> None:
+        if self._tray_proc and self._tray_proc.poll() is None:
+            self._tray_proc.terminate()
 
     # ── cross-session memory ──
 
@@ -460,7 +485,10 @@ def main():
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     app = JarvisApp()
-    return app.run(sys.argv)
+    try:
+        return app.run(sys.argv)
+    finally:
+        app._stop_tray()
 
 
 if __name__ == "__main__":

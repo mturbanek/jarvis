@@ -36,7 +36,7 @@ def speak(text: str) -> None:
         future.result()
 
         proc = subprocess.Popen(
-            ["mpv", "--no-terminal", "--really-quiet", tmp],
+            ["mpv", "--no-terminal", "--really-quiet", "--af=adelay=200:all=1", tmp],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

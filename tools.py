@@ -251,10 +251,24 @@ TOOL_DEFINITIONS = [
     {
         "name": "read_screen",
         "description": (
-            "Take a screenshot of the current screen and extract all visible text using OCR. "
-            "Useful for reading error messages, dialog boxes, terminal output, or any on-screen text."
+            "Take a screenshot and use AI vision to understand what's on screen. "
+            "Far more powerful than OCR — can read text, describe UI, explain charts, "
+            "interpret error messages, and answer specific questions about screen content. "
+            "Provide an optional query to focus the analysis."
         ),
-        "input_schema": {"type": "object", "properties": {}},
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": (
+                        "Optional specific question or focus for the analysis "
+                        "(e.g. 'what does that error say?' or 'describe the chart'). "
+                        "If omitted, provides a general description of the screen."
+                    ),
+                }
+            },
+        },
     },
     {
         "name": "add_note",
@@ -484,15 +498,13 @@ def execute_tool(name: str, args: dict) -> str:
             return f"Found {len(files)} file(s):\n" + "\n".join(shown) + more
 
         elif name == "read_screen":
-            import tempfile
+            import tempfile, base64
             from PIL import Image
+            from anthropic import Anthropic
+            from config import MODEL
             with tempfile.TemporaryDirectory() as tmp:
                 screenshot = os.path.join(tmp, "screen.png")
                 captured = False
-                # GNOME 46 locks down the Shell D-Bus screenshot API, so
-                # gnome-screenshot falls back to XWayland and captures black.
-                # flameshot uses the XDG desktop portal and works correctly.
-                # grim works on wlroots compositors (Sway etc).
                 for cmd in [
                     ["flameshot", "full", "-p", screenshot],
                     ["grim", screenshot],
@@ -508,61 +520,41 @@ def execute_tool(name: str, args: dict) -> str:
                         continue
                 if not captured:
                     return (
-                        "Could not capture the screen on this system. "
-                        "Install flameshot for GNOME Wayland support: "
-                        "sudo apt install flameshot"
+                        "Could not capture the screen. "
+                        "Install flameshot: sudo apt install flameshot"
                     )
-                # Scale to 2560px — better character size on HiDPI displays than
-                # 1920px while still keeping tesseract under a few seconds.
-                from PIL import ImageOps, ImageEnhance, ImageFilter
-                scaled = os.path.join(tmp, "scaled.png")
+                # Resize to ≤1568px — Anthropic's recommended vision input size.
                 img = Image.open(screenshot)
-                if img.width > 2560:
-                    ratio = 2560 / img.width
-                    img = img.resize((2560, int(img.height * ratio)), Image.LANCZOS)
-                # Grayscale removes colour-channel noise from subpixel rendering.
-                img = img.convert("L")
-                # Dark-background terminals (very common) confuse tesseract;
-                # invert so text is always dark-on-light.
-                thumb = img.resize((32, 32))
-                avg = sum(thumb.tobytes()) / (32 * 32)
-                if avg < 128:
-                    img = ImageOps.invert(img)
-                img = img.filter(ImageFilter.SHARPEN)
-                img.save(scaled)
+                if img.width > 1568 or img.height > 1568:
+                    img.thumbnail((1568, 1568), Image.LANCZOS)
+                    img.save(screenshot, "PNG")
+                with open(screenshot, "rb") as f:
+                    img_b64 = base64.standard_b64encode(f.read()).decode("utf-8")
 
-                # Run tesseract with an explicit thread-based kill so the deadline
-                # is enforced regardless of pipe-drain behaviour after timeout.
-                proc = subprocess.Popen(
-                    ["tesseract", scaled, "stdout"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.DEVNULL,
-                )
-                ocr_output = [b""]
-                timed_out = [False]
-
-                def _read():
-                    ocr_output[0], _ = proc.communicate()
-
-                reader = threading.Thread(target=_read, daemon=True)
-                reader.start()
-                reader.join(timeout=12)
-                if reader.is_alive():
-                    proc.kill()
-                    timed_out[0] = True
-                    reader.join(timeout=2)
-
-                if timed_out[0]:
-                    return "Screen OCR timed out — too much text on screen."
-                if proc.returncode != 0:
-                    return "OCR failed. Install tesseract: sudo apt install tesseract-ocr"
-                text = ocr_output[0].decode("utf-8", errors="replace").strip()
-                if not text:
-                    return "(no text found on screen)"
-                return (
-                    "Screen OCR output (screen fonts cause recognition errors — "
-                    "interpret charitably):\n\n" + text[:3000]
-                )
+            query = (
+                args.get("query")
+                or "Describe what's on this screen in detail: all visible text, "
+                   "open applications, and any notable content."
+            )
+            resp = Anthropic().messages.create(
+                model=MODEL,
+                max_tokens=1024,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": img_b64,
+                            },
+                        },
+                        {"type": "text", "text": query},
+                    ],
+                }],
+            )
+            return resp.content[0].text
 
         elif name == "add_note":
             import re

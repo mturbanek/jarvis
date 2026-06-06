@@ -10,13 +10,16 @@ warnings.filterwarnings(
     category=UserWarning,
 )
 
+import math
 import re
+import subprocess
 import sys
 import signal
 import threading
 import datetime
 import json
 import pathlib
+from typing import Any
 
 
 def _for_tts(text: str) -> str:
@@ -42,6 +45,46 @@ def _for_tts(text: str) -> str:
     # Collapse excess blank lines
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
+
+def _build_activation_audio() -> "tuple[Any, int]":
+    """Three quick R2-D2-style chirps: linear sweep + vibrato, subtle amplitude."""
+    import numpy as np
+    rate = 44100
+    pi2 = 2 * math.pi
+
+    def chirp(f0: float, f1: float, dur: float, vib_rate: float = 11.0,
+              vib_depth: float = 55.0) -> "np.ndarray":
+        n = int(rate * dur)
+        t = np.linspace(0, dur, n, endpoint=False)
+        inst_f = np.linspace(f0, f1, n) + vib_depth * np.sin(pi2 * vib_rate * t)
+        phase = pi2 * np.cumsum(inst_f) / rate
+        wave = np.sin(phase)
+        fade = int(0.006 * rate)
+        env = np.ones(n)
+        env[:fade] = np.linspace(0, 1, fade)
+        env[-fade:] = np.linspace(1, 0, fade)
+        return wave * env
+
+    parts = [
+        chirp(900,  2400, 0.09),
+        np.zeros(int(rate * 0.028)),
+        chirp(2100,  750, 0.07),
+        np.zeros(int(rate * 0.022)),
+        chirp(1100, 1900, 0.06),
+    ]
+    audio = np.concatenate(parts).astype(np.float32)
+    return audio * 0.46, rate
+
+
+def _play_activation_sound() -> None:
+    try:
+        import sounddevice as sd
+        audio, rate = _build_activation_audio()
+        sd.play(audio, rate, device='pulse')
+        sd.wait()
+    except Exception as e:
+        print(f"[JARVIS] Activation sound error: {e}")
+
 
 import gi
 
@@ -294,6 +337,7 @@ class JarvisApp(Gtk.Application):
             return
         self._stop_event.clear()
         self._processing = True
+        threading.Thread(target=_play_activation_sound, daemon=True).start()
         self.overlay.show_listening()
         threading.Thread(target=self._pipeline, daemon=True).start()
 
@@ -357,6 +401,7 @@ class JarvisApp(Gtk.Application):
                 GLib.idle_add(self.overlay.show_user_text, text)
 
                 response = self._ai.process(text, on_text=on_text, on_tool=on_tool)
+                GLib.idle_add(self.overlay.finish_response)
 
                 if self._stop_event.is_set():
                     break

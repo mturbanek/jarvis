@@ -27,7 +27,15 @@ window.jarvis-root {
 }
 
 .jarvis-panel {
-    background: linear-gradient(150deg, rgba(5,12,32,0.97) 0%, rgba(3,7,18,0.99) 100%);
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(30, 90, 220, 0.11) 2px,
+            rgba(30, 90, 220, 0.11) 3px
+        ),
+        linear-gradient(150deg, rgba(5,12,32,0.97) 0%, rgba(3,7,18,0.99) 100%);
     border: 1px solid rgba(52, 140, 255, 0.40);
     border-top: 2px solid rgba(52, 140, 255, 0.60);
     border-radius: 24px;
@@ -112,6 +120,13 @@ window.jarvis-root {
     color: rgba(235, 245, 255, 0.97);
     font-family: sans-serif;
     font-size: 18px;
+}
+
+.timestamp-label {
+    color: rgba(80, 120, 220, 0.38);
+    font-family: monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
 }
 
 .turn-sep {
@@ -543,6 +558,60 @@ class _WaveformWidget(Gtk.DrawingArea):
             cr.fill()
 
 
+class _ParticleField(Gtk.DrawingArea):
+    """Subtle drifting star-field drawn over the panel at very low opacity."""
+
+    _N = 22
+
+    def __init__(self):
+        super().__init__()
+        self.set_hexpand(True)
+        self.set_vexpand(True)
+        self.set_can_target(False)
+        self.set_draw_func(self._draw)
+
+        import random
+        rng = random.Random(7)
+        self._p = [
+            {
+                "x": rng.uniform(0, 900),
+                "y": rng.uniform(0, 300),
+                "dx": rng.uniform(-0.25, 0.25),
+                "dy": rng.uniform(-0.18, 0.18),
+                "r": rng.uniform(0.8, 2.0),
+                "base_a": rng.uniform(0.05, 0.17),
+                "phase": rng.uniform(0, 6.28),
+                "speed": rng.uniform(0.025, 0.07),
+            }
+            for _ in range(self._N)
+        ]
+        self._w = 900.0
+        self._h = 300.0
+        GLib.timeout_add(50, self._tick)
+
+    def _tick(self):
+        w = self.get_width()
+        h = self.get_height()
+        if w > 0:
+            self._w = w
+        if h > 0:
+            self._h = h
+        for p in self._p:
+            p["x"] = (p["x"] + p["dx"]) % self._w
+            p["y"] = (p["y"] + p["dy"]) % self._h
+            p["phase"] += p["speed"]
+        self.queue_draw()
+        return True
+
+    def _draw(self, _widget, cr, _w, _h):
+        for p in self._p:
+            twinkle = (math.sin(p["phase"]) + 1) * 0.5
+            alpha = p["base_a"] * (0.35 + 0.65 * twinkle)
+            cr.set_source_rgba(0.62, 0.78, 1.0, alpha)
+            cr.arc(p["x"], p["y"], p["r"], 0, 2 * math.pi)
+            cr.fill()
+
+
 class _ResizeGrip(Gtk.DrawingArea):
     """Bottom-right corner drag handle for resizing the undecorated window."""
 
@@ -589,11 +658,25 @@ class _ResizeGrip(Gtk.DrawingArea):
 
 
 class _MessageBlock(Gtk.Box):
-    """One conversation turn: optional user prompt + JARVIS response + optional inline chart."""
+    """One conversation turn: timestamp + optional user prompt + JARVIS response + optional chart."""
+
+    _CURSOR = "▌"
 
     def __init__(self, user_text: "str | None" = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.set_opacity(0.0)
+
+        # Timestamp row (right-aligned)
+        import datetime as _dt
+        ts_text = _dt.datetime.now().strftime("%I:%M %p").lstrip("0")
+        ts_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        _spacer = Gtk.Box()
+        _spacer.set_hexpand(True)
+        ts_row.append(_spacer)
+        ts_lbl = Gtk.Label(label=ts_text)
+        ts_lbl.add_css_class("timestamp-label")
+        ts_row.append(ts_lbl)
+        self.append(ts_row)
 
         if user_text:
             you = Gtk.Label(label=f"you  ·  {user_text}")
@@ -612,13 +695,44 @@ class _MessageBlock(Gtk.Box):
         self._resp.set_selectable(True)
         self.append(self._resp)
 
+        self._text = ""
+        self._cursor_on = True
+        self._cursor_timer = GLib.timeout_add(500, self._blink)
+
         self._chart: "_ChartWidget | None" = None
 
+    _CURSOR_MARKUP = '<span foreground="#3d8eff" alpha="90%">▋</span>'
+
+    def _render(self) -> None:
+        import html
+        escaped = html.escape(self._text)
+        if self._cursor_timer is not None and self._cursor_on:
+            self._resp.set_markup(escaped + self._CURSOR_MARKUP)
+        else:
+            self._resp.set_markup(escaped)
+
+    def _blink(self) -> bool:
+        if self._cursor_timer is None:
+            return False
+        self._cursor_on = not self._cursor_on
+        self._render()
+        return True
+
     def set_response(self, text: str) -> None:
+        """Set static text (greeting — no streaming cursor needed)."""
+        self._text = text
         self._resp.set_text(text)
 
     def append_response(self, chunk: str) -> None:
-        self._resp.set_text(self._resp.get_text() + chunk)
+        self._text += chunk
+        self._render()
+
+    def finish(self) -> None:
+        """Stop cursor blinking and display final clean text."""
+        if self._cursor_timer is not None:
+            GLib.source_remove(self._cursor_timer)
+            self._cursor_timer = None
+        self._resp.set_text(self._text)
 
     def set_chart(self, data: dict) -> None:
         if self._chart is None:
@@ -761,7 +875,13 @@ class JarvisOverlay(Gtk.Window):
 
         self._panel.append(_ResizeGrip(self))
 
-        outer.append(self._panel)
+        # Wrap panel in Gtk.Overlay so the particle field floats above content
+        panel_overlay = Gtk.Overlay()
+        panel_overlay.set_child(self._panel)
+        particles = _ParticleField()
+        panel_overlay.add_overlay(particles)
+
+        outer.append(panel_overlay)
         self.set_child(outer)
 
     def _set_state(self, state: str):
@@ -849,6 +969,12 @@ class JarvisOverlay(Gtk.Window):
     def add_greeting(self, text: str):
         block = self._new_block(user_text=None)
         block.set_response(text)
+        block.finish()  # greeting is not streamed — stop cursor immediately
+
+    def finish_response(self):
+        """Stop the blinking cursor on the current block when streaming ends."""
+        if self._current_block:
+            self._current_block.finish()
 
     def show_processing(self):
         self._cancel_dot_blink()

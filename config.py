@@ -1,6 +1,21 @@
 import os
+import pathlib
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+# Read API key from env var, falling back to ~/.config/jarvis/env so the app
+# works when launched from the GNOME desktop (which doesn't source .bashrc).
+def _load_api_key() -> str:
+    key = os.getenv("ANTHROPIC_API_KEY", "")
+    if key:
+        return key
+    env_file = pathlib.Path.home() / ".config" / "jarvis" / "env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            line = line.strip()
+            if line.startswith("ANTHROPIC_API_KEY="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+ANTHROPIC_API_KEY = _load_api_key()
 
 # claude-haiku-4-5 = fastest voice responses (~1s)
 # claude-sonnet-4-6 = balanced speed + smarts

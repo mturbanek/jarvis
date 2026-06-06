@@ -2,7 +2,7 @@
 
 A voice-activated AI desktop assistant for Linux (Wayland/X11), powered by Claude.
 
-Press **Ctrl+J** to start a session. JARVIS greets you with a context-aware message based on your recent shell history, then listens continuously until you stop talking or press Ctrl+J again.
+Press **Ctrl+J** to start a voice session, or type directly into the overlay text box. JARVIS greets you with a context-aware message based on your recent shell history, then listens continuously until you stop talking or press Ctrl+J again.
 
 ---
 
@@ -21,6 +21,9 @@ Press **Ctrl+J** to start a session. JARVIS greets you with a context-aware mess
 - **R2-D2 activation sound** — three quick swept chirps play on Ctrl+J
 - **Draggable + resizable window** — drag by the header, resize from the bottom-right grip
 - **Vision screen reading** — `read_screen` uses Claude's vision API instead of OCR; can describe UI, interpret charts, and answer specific questions about screen content
+- **Typed input** — text box at the bottom of the overlay; disabled during voice, enabled when a session ends so you can follow up without speaking
+- **Done sound** — low-high two-tone chime plays after each response so you know it's your turn
+- **GNOME launcher** — `.desktop` file for the app grid/dock; tray icon in the top bar (requires AppIndicator GNOME extension) with Activate and Quit menu items
 - **5-second silence timeout** — session closes automatically if you stop talking
 
 ---
@@ -60,11 +63,14 @@ export ANTHROPIC_API_KEY='sk-ant-...'
 ./venv/bin/python main.py
 ```
 
+Or store the key in `~/.config/jarvis/env` (one line: `ANTHROPIC_API_KEY=sk-ant-...`) and launch from the GNOME dock or app grid.
+
 | Action | Effect |
 |---|---|
-| **Ctrl+J** | Start session (greeting + continuous listening) |
+| **Ctrl+J** | Start voice session (greeting + continuous listening) |
 | **Ctrl+J** (during session) | End session immediately |
 | Silence for 5 seconds | Session closes automatically |
+| Type + **Enter** in text box | Send a message without using voice |
 | *"Clear history"* / *"Fresh start"* | Wipe the current session's conversation history |
 
 ---
@@ -119,12 +125,13 @@ All tunable settings are in `config.py`:
 ## Architecture
 
 ```
-main.py       GTK app, evdev hotkey listener, session loop, greeting
-overlay.py    Transparent GTK4 window — waveform, charts, state transitions
+main.py       GTK app, hotkey listener, voice + text pipelines, greeting, tray launch
+overlay.py    Transparent GTK4 window — waveform, chat log, text entry, state transitions
+tray.py       GTK3 subprocess — AyatanaAppIndicator3 tray icon, signals main via SIGUSR1
 recorder.py   Mic capture (sounddevice) with VAD and silence timeout
 stt.py        Whisper transcription via faster-whisper (CPU int8)
 tts.py        edge-tts synthesis → mpv playback
 claude.py     Anthropic streaming client with conversation history
 tools.py      Tool definitions, executor, background performance sampler
-config.py     Constants and tunables
+config.py     Constants and tunables; reads API key from ~/.config/jarvis/env as fallback
 ```

@@ -474,13 +474,23 @@ def execute_tool(name: str, args: dict) -> str:
                         "Install flameshot for GNOME Wayland support: "
                         "sudo apt install flameshot"
                     )
-                # Scale to 1920px wide — preserves enough detail for small UI text
-                # while keeping tesseract runtime to a few seconds.
+                # Scale to 2560px — better character size on HiDPI displays than
+                # 1920px while still keeping tesseract under a few seconds.
+                from PIL import ImageOps, ImageEnhance, ImageFilter
                 scaled = os.path.join(tmp, "scaled.png")
                 img = Image.open(screenshot)
-                if img.width > 1920:
-                    ratio = 1920 / img.width
-                    img = img.resize((1920, int(img.height * ratio)), Image.LANCZOS)
+                if img.width > 2560:
+                    ratio = 2560 / img.width
+                    img = img.resize((2560, int(img.height * ratio)), Image.LANCZOS)
+                # Grayscale removes colour-channel noise from subpixel rendering.
+                img = img.convert("L")
+                # Dark-background terminals (very common) confuse tesseract;
+                # invert so text is always dark-on-light.
+                thumb = img.resize((32, 32))
+                avg = sum(thumb.tobytes()) / (32 * 32)
+                if avg < 128:
+                    img = ImageOps.invert(img)
+                img = img.filter(ImageFilter.SHARPEN)
                 img.save(scaled)
 
                 # Run tesseract with an explicit thread-based kill so the deadline
@@ -509,7 +519,12 @@ def execute_tool(name: str, args: dict) -> str:
                 if proc.returncode != 0:
                     return "OCR failed. Install tesseract: sudo apt install tesseract-ocr"
                 text = ocr_output[0].decode("utf-8", errors="replace").strip()
-                return text[:3000] if text else "(no text found on screen)"
+                if not text:
+                    return "(no text found on screen)"
+                return (
+                    "Screen OCR output (screen fonts cause recognition errors — "
+                    "interpret charitably):\n\n" + text[:3000]
+                )
 
         else:
             return f"Unknown tool: {name}"

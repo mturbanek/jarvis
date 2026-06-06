@@ -9,16 +9,24 @@ class JarvisAI:
     def __init__(self):
         self.client = Anthropic()
         self.history: list = []
+        self._memory_context: str = ""
+
+    def set_memory_context(self, context: str) -> None:
+        self._memory_context = context
 
     def process(self, user_message: str, on_text=None, on_tool=None) -> str:
         self.history.append({"role": "user", "content": user_message})
         self._trim_history()
 
+        system = SYSTEM_PROMPT
+        if self._memory_context:
+            system = f"{SYSTEM_PROMPT}\n\n{self._memory_context}"
+
         while True:
             with self.client.messages.stream(
                 model=MODEL,
                 max_tokens=1024,
-                system=SYSTEM_PROMPT,
+                system=system,
                 messages=self.history,
                 tools=TOOL_DEFINITIONS,
             ) as stream:

@@ -14,19 +14,34 @@ import sys
 import signal
 import threading
 import datetime
+import json
+import pathlib
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk, GLib
 
-from config import ANTHROPIC_API_KEY, HOTKEY, OVERLAY_LINGER_MS
+from config import ANTHROPIC_API_KEY, HOTKEY, OVERLAY_LINGER_MS, MODEL
 from overlay import JarvisOverlay
 from recorder import record_voice
 from stt import transcribe, prewarm as stt_prewarm
 from tts import speak, stop as stop_tts
 from claude import JarvisAI
-from tools import set_chart_callback
+from tools import set_chart_callback, set_speak_callback
+
+_MEMORY_PATH = pathlib.Path.home() / ".config" / "jarvis" / "sessions.json"
+
+_CLEAR_PHRASES = frozenset([
+    "clear history", "reset history", "clear context", "reset context",
+    "fresh start", "start over", "forget everything", "clear conversation",
+    "reset conversation", "wipe history", "clear memory", "forget it all",
+])
+
+
+def _is_clear_command(text: str) -> bool:
+    lower = text.lower().strip(".,!? ")
+    return any(phrase in lower for phrase in _CLEAR_PHRASES)
 
 
 class JarvisApp(Gtk.Application):
@@ -36,6 +51,7 @@ class JarvisApp(Gtk.Application):
         self._greeted = False
         self._stop_event = threading.Event()
         self._startup_context = ""
+        self._session_memory = ""
         self._ai = JarvisAI()
         self.overlay: "JarvisOverlay | None" = None
 
@@ -47,17 +63,86 @@ class JarvisApp(Gtk.Application):
         self.overlay.set_visible(False)
 
         set_chart_callback(lambda data: GLib.idle_add(self.overlay.show_chart, data))
+        set_speak_callback(lambda text: (stop_tts(), speak(text)))
+
+        self._session_memory = self._load_session_memory()
+        if self._session_memory:
+            self._ai.set_memory_context(self._session_memory)
+
         stt_prewarm()
         threading.Thread(target=self._hotkey_thread, daemon=True).start()
         threading.Thread(target=self._gather_startup_context, daemon=True).start()
         print(f"JARVIS ready.  Press {HOTKEY.upper()} to activate.")
 
+    # ── cross-session memory ──
+
+    def _load_session_memory(self) -> str:
+        if not _MEMORY_PATH.exists():
+            return ""
+        try:
+            sessions = json.loads(_MEMORY_PATH.read_text())
+            if not sessions:
+                return ""
+            lines = [f"- {s['date']}: {s['summary']}" for s in sessions[-10:]]
+            return "Previous session notes:\n" + "\n".join(lines)
+        except Exception:
+            return ""
+
+    def _save_session_summary(self) -> None:
+        user_turns = [
+            m for m in self._ai.history
+            if m.get("role") == "user" and isinstance(m.get("content"), str)
+        ]
+        if len(user_turns) < 2:
+            return
+        parts = []
+        for m in self._ai.history:
+            role = m.get("role", "")
+            content = m.get("content", "")
+            if isinstance(content, str):
+                parts.append(f"{role.upper()}: {content}")
+            elif isinstance(content, list):
+                for block in content:
+                    if hasattr(block, "text"):
+                        parts.append(f"{role.upper()}: {block.text}")
+                        break
+                    elif isinstance(block, dict) and block.get("type") == "text":
+                        parts.append(f"{role.upper()}: {block.get('text', '')}")
+                        break
+        if not parts:
+            return
+        history_text = "\n".join(parts[-20:])
+        try:
+            from anthropic import Anthropic
+            client = Anthropic()
+            response = client.messages.create(
+                model=MODEL,
+                max_tokens=60,
+                messages=[{
+                    "role": "user",
+                    "content": f"Summarize in one brief sentence what was discussed:\n{history_text}",
+                }],
+            )
+            summary = response.content[0].text.strip()
+            _MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+            sessions = []
+            if _MEMORY_PATH.exists():
+                try:
+                    sessions = json.loads(_MEMORY_PATH.read_text())
+                except Exception:
+                    pass
+            sessions.append({
+                "date": datetime.date.today().isoformat(),
+                "summary": summary,
+            })
+            sessions = sessions[-20:]
+            _MEMORY_PATH.write_text(json.dumps(sessions, indent=2))
+        except Exception as e:
+            print(f"[JARVIS] Memory save failed: {e}")
+
     # ── startup context ──
 
     def _gather_startup_context(self) -> None:
-        """Read shell history in the background so it's ready for the first greeting."""
-        import pathlib
-
         lines = []
         for hist_path in [
             pathlib.Path.home() / ".zsh_history",
@@ -78,7 +163,6 @@ class JarvisApp(Gtk.Application):
             if lines:
                 break
 
-        # Deduplicate while preserving recency order
         seen: set = set()
         unique = []
         for cmd in reversed(lines[-150:]):
@@ -89,15 +173,17 @@ class JarvisApp(Gtk.Application):
         self._startup_context = "\n".join(reversed(unique[:60]))
 
     def _build_greeting(self, period: str) -> str:
-        """Ask Claude to craft a context-aware greeting from recent shell history."""
-        from anthropic import Anthropic
-        from config import MODEL
+        context_parts = []
+        if self._startup_context:
+            context_parts.append(f"Recent shell history (most recent last):\n{self._startup_context}")
+        if self._session_memory:
+            context_parts.append(self._session_memory)
 
-        context = self._startup_context
-        if not context:
+        if not context_parts:
             return f"Good {period}, Sir."
 
         try:
+            from anthropic import Anthropic
             client = Anthropic()
             response = client.messages.create(
                 model=MODEL,
@@ -116,7 +202,7 @@ class JarvisApp(Gtk.Application):
                     "role": "user",
                     "content": (
                         f"Time of day: {period}.\n"
-                        f"Recent shell history (most recent last):\n{context}"
+                        + "\n\n".join(context_parts)
                     ),
                 }],
             )
@@ -177,7 +263,6 @@ class JarvisApp(Gtk.Application):
 
     def _trigger(self):
         if self._processing:
-            # Second Ctrl+J ends the session
             self._stop_event.set()
             stop_tts()
             return
@@ -224,11 +309,9 @@ class JarvisApp(Gtk.Application):
                     break
 
                 if audio is None:
-                    # No speech within 5 seconds — close the session
                     break
 
                 GLib.idle_add(self.overlay.show_processing)
-
                 text = transcribe(audio)
 
                 if self._stop_event.is_set():
@@ -238,6 +321,12 @@ class JarvisApp(Gtk.Application):
                     continue
 
                 GLib.idle_add(self.overlay.show_user_text, text)
+
+                if _is_clear_command(text):
+                    self._ai.clear_history()
+                    GLib.idle_add(self.overlay.show_speaking)
+                    speak("History cleared, Sir.")
+                    continue
 
                 response = self._ai.process(text, on_text=on_text, on_tool=on_tool)
 
@@ -253,6 +342,7 @@ class JarvisApp(Gtk.Application):
 
         finally:
             self._processing = False
+            threading.Thread(target=self._save_session_summary, daemon=True).start()
             GLib.idle_add(self.overlay.schedule_hide, OVERLAY_LINGER_MS)
 
 

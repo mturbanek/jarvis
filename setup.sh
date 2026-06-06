@@ -17,9 +17,17 @@ sudo apt install -y \
     libportaudio2 \
     mpv \
     xclip \
-    libnotify-bin
+    libnotify-bin \
+    curl \
+    tesseract-ocr \
+    scrot
 
 # gtk4-layer-shell gives proper bottom-anchored Wayland overlay (optional)
+echo
+echo "► Trying to install grim (optional, Wayland screenshot for screen OCR)..."
+sudo apt install -y grim 2>/dev/null \
+    || echo "  (grim not available — screen OCR will fall back to scrot)"
+
 echo
 echo "► Trying to install gtk4-layer-shell (optional, Wayland overlay)..."
 sudo apt install -y gir1.2-gtk4layershell-1.0 2>/dev/null \

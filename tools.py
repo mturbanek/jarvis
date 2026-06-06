@@ -474,20 +474,40 @@ def execute_tool(name: str, args: dict) -> str:
                         "Install flameshot for GNOME Wayland support: "
                         "sudo apt install flameshot"
                     )
-                # Scale to max 1920px wide — tesseract is very slow on 4K+ images
+                # Scale to 1280px wide — good enough for OCR, much faster than 4K
                 scaled = os.path.join(tmp, "scaled.png")
                 img = Image.open(screenshot)
-                if img.width > 1920:
-                    ratio = 1920 / img.width
-                    img = img.resize((1920, int(img.height * ratio)), Image.LANCZOS)
+                if img.width > 1280:
+                    ratio = 1280 / img.width
+                    img = img.resize((1280, int(img.height * ratio)), Image.LANCZOS)
                 img.save(scaled)
-                r = subprocess.run(
-                    ["tesseract", scaled, "stdout"],
-                    capture_output=True, text=True, timeout=30,
+
+                # Run tesseract with an explicit thread-based kill so the deadline
+                # is enforced regardless of pipe-drain behaviour after timeout.
+                proc = subprocess.Popen(
+                    ["tesseract", scaled, "stdout", "--psm", "11"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
                 )
-                if r.returncode != 0:
+                ocr_output = [b""]
+                timed_out = [False]
+
+                def _read():
+                    ocr_output[0], _ = proc.communicate()
+
+                reader = threading.Thread(target=_read, daemon=True)
+                reader.start()
+                reader.join(timeout=12)
+                if reader.is_alive():
+                    proc.kill()
+                    timed_out[0] = True
+                    reader.join(timeout=2)
+
+                if timed_out[0]:
+                    return "Screen OCR timed out — too much text on screen."
+                if proc.returncode != 0:
                     return "OCR failed. Install tesseract: sudo apt install tesseract-ocr"
-                text = r.stdout.strip()
+                text = ocr_output[0].decode("utf-8", errors="replace").strip()
                 return text[:3000] if text else "(no text found on screen)"
 
         else:

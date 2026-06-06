@@ -86,6 +86,36 @@ def _play_activation_sound() -> None:
         print(f"[JARVIS] Activation sound error: {e}")
 
 
+def _build_done_audio() -> "tuple[Any, int]":
+    """Low-high two-tone done cue: clean sine notes with natural decay."""
+    import numpy as np
+    rate = 44100
+    pi2 = 2 * math.pi
+
+    def tone(freq: float, dur: float, tau: float = 0.18) -> "np.ndarray":
+        n = int(rate * dur)
+        t = np.linspace(0, dur, n, endpoint=False)
+        wave = np.sin(pi2 * freq * t)
+        env = np.exp(-t / tau)
+        attack = int(0.004 * rate)
+        env[:attack] *= np.linspace(0, 1, attack)
+        return (wave * env).astype(np.float32)
+
+    gap = np.zeros(int(rate * 0.05), dtype=np.float32)
+    audio = np.concatenate([tone(520, 0.22), gap, tone(1040, 0.28)])
+    return audio * 0.52, rate
+
+
+def _play_done_sound() -> None:
+    try:
+        import sounddevice as sd
+        audio, rate = _build_done_audio()
+        sd.play(audio, rate, device='pulse')
+        sd.wait()
+    except Exception as e:
+        print(f"[JARVIS] Done sound error: {e}")
+
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -409,6 +439,7 @@ class JarvisApp(Gtk.Application):
                 if response:
                     GLib.idle_add(self.overlay.show_speaking)
                     speak(_for_tts(response))
+                    threading.Thread(target=_play_done_sound, daemon=True).start()
 
         except Exception as exc:
             print(f"[JARVIS] Pipeline error: {exc}")

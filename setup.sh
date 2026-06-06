@@ -20,13 +20,13 @@ sudo apt install -y \
     libnotify-bin \
     curl \
     tesseract-ocr \
-    scrot
+    flameshot
 
 # gtk4-layer-shell gives proper bottom-anchored Wayland overlay (optional)
 echo
-echo "► Trying to install grim (optional, Wayland screenshot for screen OCR)..."
+echo "► Trying to install grim (optional, for non-GNOME Wayland compositors)..."
 sudo apt install -y grim 2>/dev/null \
-    || echo "  (grim not available — screen OCR will fall back to scrot)"
+    || echo "  (grim not available — flameshot will be used on GNOME Wayland)"
 
 echo
 echo "► Trying to install gtk4-layer-shell (optional, Wayland overlay)..."

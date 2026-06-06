@@ -380,9 +380,10 @@ def execute_tool(name: str, args: dict) -> str:
                 return "\n".join(lines)
 
         elif name == "get_weather":
+            from urllib.parse import quote
             location = args.get("location", "")
             url = (
-                f"https://wttr.in/{location}?format=j1"
+                f"https://wttr.in/{quote(location)}?format=j1"
                 if location
                 else "https://wttr.in/?format=j1"
             )
@@ -408,7 +409,7 @@ def execute_tool(name: str, args: dict) -> str:
                     f"{temp_c}°C (feels like {feels_c}°C). "
                     f"Humidity {humidity}%, wind {wind_kmph} km/h."
                 )
-            except (KeyError, json.JSONDecodeError) as e:
+            except (KeyError, IndexError, json.JSONDecodeError) as e:
                 return f"Could not parse weather data: {e}"
 
         elif name == "find_and_open":
@@ -446,23 +447,43 @@ def execute_tool(name: str, args: dict) -> str:
 
         elif name == "read_screen":
             import tempfile
+            from PIL import Image
             with tempfile.TemporaryDirectory() as tmp:
                 screenshot = os.path.join(tmp, "screen.png")
                 captured = False
-                for cmd in [["grim", screenshot], ["scrot", screenshot]]:
-                    r = subprocess.run(cmd, capture_output=True)
-                    if r.returncode == 0:
-                        captured = True
-                        break
+                # GNOME 46 locks down the Shell D-Bus screenshot API, so
+                # gnome-screenshot falls back to XWayland and captures black.
+                # flameshot uses the XDG desktop portal and works correctly.
+                # grim works on wlroots compositors (Sway etc).
+                for cmd in [
+                    ["flameshot", "full", "-p", screenshot],
+                    ["grim", screenshot],
+                ]:
+                    try:
+                        r = subprocess.run(cmd, capture_output=True, timeout=15)
+                        if (r.returncode == 0
+                                and os.path.exists(screenshot)
+                                and os.path.getsize(screenshot) > 10000):
+                            captured = True
+                            break
+                    except (subprocess.TimeoutExpired, FileNotFoundError):
+                        continue
                 if not captured:
                     return (
-                        "Could not take a screenshot. "
-                        "Install grim (Wayland): sudo apt install grim  "
-                        "or scrot (X11): sudo apt install scrot"
+                        "Could not capture the screen on this system. "
+                        "Install flameshot for GNOME Wayland support: "
+                        "sudo apt install flameshot"
                     )
+                # Scale to max 1920px wide — tesseract is very slow on 4K+ images
+                scaled = os.path.join(tmp, "scaled.png")
+                img = Image.open(screenshot)
+                if img.width > 1920:
+                    ratio = 1920 / img.width
+                    img = img.resize((1920, int(img.height * ratio)), Image.LANCZOS)
+                img.save(scaled)
                 r = subprocess.run(
-                    ["tesseract", screenshot, "stdout"],
-                    capture_output=True, text=True,
+                    ["tesseract", scaled, "stdout"],
+                    capture_output=True, text=True, timeout=30,
                 )
                 if r.returncode != 0:
                     return "OCR failed. Install tesseract: sudo apt install tesseract-ocr"

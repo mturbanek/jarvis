@@ -256,6 +256,44 @@ TOOL_DEFINITIONS = [
         ),
         "input_schema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "add_note",
+        "description": (
+            "Save a quick note to ~/notes.md with a timestamp. "
+            "Use when the user says 'note that', 'remember', 'jot down', 'make a note', etc."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "The note content to save"},
+            },
+            "required": ["text"],
+        },
+    },
+    {
+        "name": "read_notes",
+        "description": "Read recent notes from ~/notes.md.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "description": "Number of recent notes to return (default 5)",
+                },
+            },
+        },
+    },
+    {
+        "name": "search_notes",
+        "description": "Search ~/notes.md for notes containing a keyword or phrase.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Keyword or phrase to search for"},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 
@@ -525,6 +563,42 @@ def execute_tool(name: str, args: dict) -> str:
                     "Screen OCR output (screen fonts cause recognition errors — "
                     "interpret charitably):\n\n" + text[:3000]
                 )
+
+        elif name == "add_note":
+            import re
+            text = args["text"].strip()
+            notes_path = pathlib.Path.home() / "notes.md"
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            entry = f"\n## {timestamp}\n{text}\n"
+            with open(notes_path, "a") as f:
+                f.write(entry)
+            return f"Note saved."
+
+        elif name == "read_notes":
+            import re
+            count = int(args.get("count", 5))
+            notes_path = pathlib.Path.home() / "notes.md"
+            if not notes_path.exists() or not notes_path.read_text().strip():
+                return "No notes yet."
+            content = notes_path.read_text()
+            blocks = re.split(r"(?=^## \d)", content, flags=re.MULTILINE)
+            blocks = [b.strip() for b in blocks if b.strip()]
+            recent = blocks[-count:]
+            return "\n\n".join(recent)
+
+        elif name == "search_notes":
+            import re
+            query = args["query"]
+            notes_path = pathlib.Path.home() / "notes.md"
+            if not notes_path.exists() or not notes_path.read_text().strip():
+                return "No notes to search."
+            content = notes_path.read_text()
+            blocks = re.split(r"(?=^## \d)", content, flags=re.MULTILINE)
+            blocks = [b.strip() for b in blocks if b.strip()]
+            matches = [b for b in blocks if query.lower() in b.lower()]
+            if not matches:
+                return f"No notes found matching '{query}'."
+            return f"{len(matches)} match(es):\n\n" + "\n\n".join(matches[-10:])
 
         else:
             return f"Unknown tool: {name}"

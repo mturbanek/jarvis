@@ -93,6 +93,9 @@ All tunable settings are in `config.py`:
 | `get_weather` | Current weather for any city (no API key needed) |
 | `find_and_open` | Search files by name pattern, optionally open the match |
 | `read_screen` | Screenshot + OCR — read any text visible on screen |
+| `add_note` | Save a timestamped note to `~/notes.md` |
+| `read_notes` | Read your most recent notes |
+| `search_notes` | Search notes by keyword |
 
 ### Example requests
 
@@ -100,6 +103,8 @@ All tunable settings are in `config.py`:
 - *"What's the weather in Tokyo?"*
 - *"Find my resume and open it"*
 - *"What does that error message say?"* — JARVIS reads the screen
+- *"Note that the deploy key needs rotating next week"*
+- *"What did I note about the API?"*
 - *"Show me CPU and RAM over the last two minutes"*
 - *"Graph disk usage by partition"*
 

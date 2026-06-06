@@ -13,7 +13,6 @@ try:
 except (ValueError, ImportError):
     _ls = None
 
-# (r, g, b) accent per state
 _STATE_COLORS = {
     "idle":       (0.20, 0.52, 1.00),
     "listening":  (0.20, 0.52, 1.00),
@@ -28,103 +27,132 @@ window.jarvis-root {
 }
 
 .jarvis-panel {
-    background: linear-gradient(150deg, rgba(5,12,32,0.97) 0%, rgba(3,7,18,0.98) 100%);
+    background: linear-gradient(150deg, rgba(5,12,32,0.97) 0%, rgba(3,7,18,0.99) 100%);
     border: 1px solid rgba(52, 140, 255, 0.40);
-    border-top: 2px solid rgba(52, 140, 255, 0.55);
-    border-radius: 20px;
-    padding: 20px 28px 22px 28px;
+    border-top: 2px solid rgba(52, 140, 255, 0.60);
+    border-radius: 24px;
+    padding: 22px 32px 26px 32px;
     box-shadow:
-        0 16px 48px rgba(0,0,0,0.75),
-        inset 0 1px 0 rgba(255,255,255,0.05);
+        0 20px 56px rgba(0,0,0,0.80),
+        inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 .state-listening {
-    border-color: rgba(52, 140, 255, 0.85);
-    border-top-color: rgba(80, 170, 255, 0.90);
+    border-color: rgba(52, 140, 255, 0.88);
+    border-top-color: rgba(80, 170, 255, 0.95);
     box-shadow:
-        0 16px 48px rgba(0,0,0,0.75),
-        0 0 40px rgba(52, 140, 255, 0.30),
-        0 0 80px rgba(52, 140, 255, 0.12),
-        inset 0 1px 0 rgba(255,255,255,0.07);
+        0 20px 56px rgba(0,0,0,0.80),
+        0 0 52px rgba(52, 140, 255, 0.34),
+        0 0 104px rgba(52, 140, 255, 0.14),
+        inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .state-processing {
-    border-color: rgba(255, 178, 30, 0.85);
-    border-top-color: rgba(255, 205, 80, 0.90);
+    border-color: rgba(255, 178, 30, 0.88);
+    border-top-color: rgba(255, 210, 80, 0.95);
     box-shadow:
-        0 16px 48px rgba(0,0,0,0.75),
-        0 0 40px rgba(255, 178, 30, 0.28),
-        0 0 80px rgba(255, 178, 30, 0.10),
-        inset 0 1px 0 rgba(255,255,255,0.07);
+        0 20px 56px rgba(0,0,0,0.80),
+        0 0 52px rgba(255, 178, 30, 0.32),
+        0 0 104px rgba(255, 178, 30, 0.12),
+        inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .state-responding {
-    border-color: rgba(20, 215, 245, 0.85);
-    border-top-color: rgba(60, 235, 255, 0.90);
+    border-color: rgba(20, 215, 245, 0.88);
+    border-top-color: rgba(60, 240, 255, 0.95);
     box-shadow:
-        0 16px 48px rgba(0,0,0,0.75),
-        0 0 40px rgba(20, 215, 245, 0.28),
-        0 0 80px rgba(20, 215, 245, 0.10),
-        inset 0 1px 0 rgba(255,255,255,0.07);
+        0 20px 56px rgba(0,0,0,0.80),
+        0 0 52px rgba(20, 215, 245, 0.32),
+        0 0 104px rgba(20, 215, 245, 0.12),
+        inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .state-speaking {
-    border-color: rgba(165, 82, 255, 0.85);
-    border-top-color: rgba(195, 120, 255, 0.90);
+    border-color: rgba(165, 82, 255, 0.88);
+    border-top-color: rgba(200, 125, 255, 0.95);
     box-shadow:
-        0 16px 48px rgba(0,0,0,0.75),
-        0 0 40px rgba(165, 82, 255, 0.28),
-        0 0 80px rgba(165, 82, 255, 0.10),
-        inset 0 1px 0 rgba(255,255,255,0.07);
+        0 20px 56px rgba(0,0,0,0.80),
+        0 0 52px rgba(165, 82, 255, 0.32),
+        0 0 104px rgba(165, 82, 255, 0.12),
+        inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .title-label {
-    color: #5599FF;
+    color: #6aadff;
     font-family: monospace;
-    font-size: 14px;
+    font-size: 20px;
     font-weight: bold;
-    letter-spacing: 6px;
+    letter-spacing: 8px;
 }
 
 .status-label {
     color: rgba(100, 160, 255, 0.80);
     font-family: monospace;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: bold;
     letter-spacing: 3px;
 }
 
+.header-sep {
+    background: linear-gradient(90deg, transparent, rgba(52, 120, 255, 0.22), transparent);
+    min-height: 1px;
+    margin-top: 4px;
+    margin-bottom: 0px;
+}
+
 .user-label {
-    color: rgba(150, 185, 245, 0.75);
+    color: rgba(130, 175, 255, 0.65);
     font-family: sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     font-style: italic;
-    margin-top: 6px;
+    margin-bottom: 4px;
 }
 
 .response-label {
-    color: rgba(225, 238, 255, 0.96);
+    color: rgba(235, 245, 255, 0.97);
     font-family: sans-serif;
-    font-size: 16px;
+    font-size: 18px;
+}
+
+.turn-sep {
+    background: linear-gradient(90deg, transparent, rgba(52, 120, 255, 0.16), transparent);
+    min-height: 1px;
+    margin-top: 18px;
+    margin-bottom: 18px;
 }
 
 .divider {
-    background-color: rgba(52, 120, 255, 0.20);
+    background-color: rgba(52, 120, 255, 0.18);
     min-height: 1px;
-    margin-top: 12px;
-    margin-bottom: 12px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+scrollbar {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 4px;
+}
+scrollbar slider {
+    background: rgba(100, 160, 255, 0.45);
+    min-width: 7px;
+    min-height: 20px;
+    border-radius: 4px;
+    margin: 2px;
+}
+scrollbar slider:hover {
+    background: rgba(100, 160, 255, 0.80);
 }
 """
 
 _ALL_STATES = ("idle", "listening", "processing", "responding", "speaking")
 
 _CHART_COLORS = [
-    (0.20, 0.52, 1.00),  # blue
-    (0.08, 0.82, 0.92),  # cyan
-    (0.65, 0.35, 1.00),  # purple
-    (1.00, 0.70, 0.12),  # amber
-    (0.20, 0.85, 0.55),  # green
-    (1.00, 0.35, 0.40),  # coral
+    (0.20, 0.52, 1.00),
+    (0.08, 0.82, 0.92),
+    (0.65, 0.35, 1.00),
+    (1.00, 0.70, 0.12),
+    (0.20, 0.85, 0.55),
+    (1.00, 0.35, 0.40),
 ]
 
 
@@ -150,8 +178,6 @@ class _ChartWidget(Gtk.DrawingArea):
         self._data = None
         self.queue_draw()
 
-    # ── dispatch ─────────────────────────────────────────────────────────────
-
     def _draw(self, _widget, cr, w, h):
         if not self._data:
             return
@@ -162,8 +188,6 @@ class _ChartWidget(Gtk.DrawingArea):
             self._bar(cr, w, h)
         elif t == "donut":
             self._donut(cr, w, h)
-
-    # ── shared helpers ────────────────────────────────────────────────────────
 
     @staticmethod
     def _font(cr, size: float, bold: bool = False) -> None:
@@ -195,8 +219,6 @@ class _ChartWidget(Gtk.DrawingArea):
             _ChartWidget._font(cr, 8)
             cr.move_to(2, y + 4)
             cr.show_text(f"{v:.0f}")
-
-    # ── line ─────────────────────────────────────────────────────────────────
 
     def _line(self, cr, w, h):
         d = self._data
@@ -234,7 +256,6 @@ class _ChartWidget(Gtk.DrawingArea):
                 continue
             r, g, b = _CHART_COLORS[si % len(_CHART_COLORS)]
 
-            # Area fill
             cr.set_source_rgba(r, g, b, 0.09)
             cr.move_to(gx(0), PT + ph)
             cr.line_to(gx(0), gy(vals[0]))
@@ -244,7 +265,6 @@ class _ChartWidget(Gtk.DrawingArea):
             cr.close_path()
             cr.fill()
 
-            # Line
             cr.set_source_rgba(r, g, b, 0.90)
             cr.set_line_width(1.5)
             cr.move_to(gx(0), gy(vals[0]))
@@ -252,7 +272,6 @@ class _ChartWidget(Gtk.DrawingArea):
                 cr.line_to(gx(i), gy(v))
             cr.stroke()
 
-            # Legend chip
             lx = PL + pw - 90
             ly = 8 + si * 14
             cr.set_source_rgba(r, g, b, 0.9)
@@ -270,8 +289,6 @@ class _ChartWidget(Gtk.DrawingArea):
             for i in range(0, len(labels), step):
                 cr.move_to(gx(i) - 6, PT + ph + 16)
                 cr.show_text(labels[i])
-
-    # ── bar ──────────────────────────────────────────────────────────────────
 
     def _bar(self, cr, w, h):
         d = self._data
@@ -344,8 +361,6 @@ class _ChartWidget(Gtk.DrawingArea):
             cr.move_to(lx + 13, ly + 1)
             cr.show_text(s.get("name", f"S{si + 1}"))
 
-    # ── donut ─────────────────────────────────────────────────────────────────
-
     def _donut(self, cr, w, h):
         d = self._data
         labels = d.get("labels", [])
@@ -372,7 +387,6 @@ class _ChartWidget(Gtk.DrawingArea):
         if outer_r <= 0:
             return
 
-        # Draw segments
         angle = -math.pi / 2
         for i, v in enumerate(values):
             if v <= 0:
@@ -387,7 +401,6 @@ class _ChartWidget(Gtk.DrawingArea):
             cr.fill()
             angle += sweep
 
-        # Gap lines between segments
         angle = -math.pi / 2
         for v in values:
             sweep = (v / total) * 2 * math.pi
@@ -398,19 +411,16 @@ class _ChartWidget(Gtk.DrawingArea):
             cr.stroke()
             angle += sweep
 
-        # Inner hole
         cr.set_source_rgba(0.03, 0.05, 0.14, 1.0)
         cr.arc(cx, cy, inner_r - 0.5, 0, 2 * math.pi)
         cr.fill()
 
-        # Centre label
         cr.set_source_rgba(0.82, 0.92, 1.0, 0.85)
         self._font(cr, 15, bold=True)
         total_s = f"{total:.0f}"
         cr.move_to(cx - len(total_s) * 4.5, cy + 6)
         cr.show_text(total_s)
 
-        # Legend
         lx = cx + outer_r + 18
         n = len(values)
         ly0 = cy - n * 10
@@ -429,12 +439,12 @@ class _ChartWidget(Gtk.DrawingArea):
 class _WaveformWidget(Gtk.DrawingArea):
     """Equalizer bars: real audio levels when listening, synthetic animation otherwise."""
 
-    _N = 22
-    _W = 130
-    _H = 44
+    _N = 26
+    _W = 150
+    _H = 48
     _BAR_W = 4
     _GAP = 2
-    _LEVEL_SCALE = 0.04  # RMS value that maps to a full-height bar
+    _LEVEL_SCALE = 0.04
 
     def __init__(self):
         super().__init__()
@@ -451,7 +461,6 @@ class _WaveformWidget(Gtk.DrawingArea):
         self._levels: deque = deque([0.0] * self._N, maxlen=self._N)
 
     def push_level(self, rms: float):
-        """Feed one real audio RMS sample (called from the GTK main thread)."""
         self._levels.append(min(1.0, rms / self._LEVEL_SCALE))
         self.queue_draw()
 
@@ -534,12 +543,99 @@ class _WaveformWidget(Gtk.DrawingArea):
             cr.fill()
 
 
+class _ResizeGrip(Gtk.DrawingArea):
+    """Bottom-right corner drag handle for resizing the undecorated window."""
+
+    _SIZE = 20
+
+    def __init__(self, window: Gtk.Window):
+        super().__init__()
+        self._win = window
+        self.set_content_width(self._SIZE)
+        self.set_content_height(self._SIZE)
+        self.set_halign(Gtk.Align.END)
+        self.set_cursor(Gdk.Cursor.new_from_name("se-resize"))
+        self.set_draw_func(self._draw)
+
+        g = Gtk.GestureClick()
+        g.set_button(1)
+        g.connect("pressed", self._start_resize)
+        self.add_controller(g)
+
+    def _draw(self, _widget, cr, w, h):
+        cr.set_source_rgba(0.35, 0.55, 1.0, 0.45)
+        cr.set_line_width(1.5)
+        for i in range(3):
+            o = 4 + i * 5
+            cr.move_to(w, h - o)
+            cr.line_to(w - o, h)
+            cr.stroke()
+
+    def _start_resize(self, gesture, _n_press, x, y):
+        surface = self._win.get_surface()
+        if not surface:
+            return
+        ev = gesture.get_last_event(gesture.get_current_sequence())
+        ts = ev.get_time() if ev else 0
+        try:
+            surface.begin_resize(
+                Gdk.SurfaceEdge.SOUTH_EAST,
+                gesture.get_device(),
+                gesture.get_button(),
+                x, y, ts,
+            )
+        except Exception:
+            pass
+
+
+class _MessageBlock(Gtk.Box):
+    """One conversation turn: optional user prompt + JARVIS response + optional inline chart."""
+
+    def __init__(self, user_text: "str | None" = None):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.set_opacity(0.0)
+
+        if user_text:
+            you = Gtk.Label(label=f"you  ·  {user_text}")
+            you.add_css_class("user-label")
+            you.set_halign(Gtk.Align.START)
+            you.set_wrap(True)
+            you.set_hexpand(True)
+            self.append(you)
+
+        self._resp = Gtk.Label(label="")
+        self._resp.add_css_class("response-label")
+        self._resp.set_halign(Gtk.Align.START)
+        self._resp.set_valign(Gtk.Align.START)
+        self._resp.set_wrap(True)
+        self._resp.set_hexpand(True)
+        self._resp.set_selectable(True)
+        self.append(self._resp)
+
+        self._chart: "_ChartWidget | None" = None
+
+    def set_response(self, text: str) -> None:
+        self._resp.set_text(text)
+
+    def append_response(self, chunk: str) -> None:
+        self._resp.set_text(self._resp.get_text() + chunk)
+
+    def set_chart(self, data: dict) -> None:
+        if self._chart is None:
+            sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+            sep.add_css_class("divider")
+            self.append(sep)
+            self._chart = _ChartWidget()
+            self.append(self._chart)
+        self._chart.load(data)
+
+
 class JarvisOverlay(Gtk.Window):
 
     def __init__(self, app: Gtk.Application):
         super().__init__(application=app)
         self.set_decorated(False)
-        self.set_resizable(False)
+        self.set_resizable(True)
         self.add_css_class("jarvis-root")
 
         self._load_css()
@@ -550,6 +646,8 @@ class JarvisOverlay(Gtk.Window):
         self._fade_timer = None
         self._dot_timer = None
         self._dot_on = True
+        self._current_block: "_MessageBlock | None" = None
+        self._blocks: "list[_MessageBlock]" = []
 
     def _load_css(self):
         provider = Gtk.CssProvider()
@@ -561,21 +659,15 @@ class JarvisOverlay(Gtk.Window):
         )
 
     def _setup_positioning(self):
-        if _LAYER_SHELL:
-            _ls.init_for_window(self)
-            _ls.set_layer(self, _ls.Layer.OVERLAY)
-            _ls.set_anchor(self, _ls.Edge.BOTTOM, True)
-            _ls.set_margin(self, _ls.Edge.BOTTOM, 60)
-            _ls.set_keyboard_mode(self, _ls.KeyboardMode.NONE)
-        else:
-            self.connect("map", self._reposition_x11)
+        # Always use regular window (layer shell anchors prevent free dragging)
+        self.connect("map", self._reposition_x11)
 
     def _reposition_x11(self, _widget):
         try:
             display = Gdk.Display.get_default()
             monitor = display.get_monitors()[0]
             geom = monitor.get_geometry()
-            win_w = self.get_width() or 780
+            win_w = self.get_width() or 920
             win_h = self.get_height() or 160
             x = geom.x + (geom.width - win_w) // 2
             y = geom.y + geom.height - win_h - 70
@@ -587,19 +679,40 @@ class JarvisOverlay(Gtk.Window):
         except Exception:
             pass
 
+    def _begin_drag(self, gesture, _n_press, _x, _y):
+        """Start interactive window move on header click-drag."""
+        surface = self.get_surface()
+        if not surface:
+            return
+        event = gesture.get_last_event(gesture.get_current_sequence())
+        ts = event.get_time() if event else 0
+        device = gesture.get_device()
+        # GTK4 ≥4.12 exposes begin_move; older versions use begin_interactive_move
+        for method in ("begin_move", "begin_interactive_move"):
+            fn = getattr(surface, method, None)
+            if fn:
+                try:
+                    if method == "begin_move":
+                        fn(device, gesture.get_button(), _x, _y, ts)
+                    else:
+                        fn(device, ts)
+                    return
+                except Exception:
+                    continue
+
     def _build_ui(self):
-        self.set_default_size(780, -1)
+        self.set_default_size(920, -1)
 
         outer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         outer.set_halign(Gtk.Align.CENTER)
 
         self._panel = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._panel.add_css_class("jarvis-panel")
-        self._panel.set_size_request(760, -1)
+        self._panel.set_size_request(900, -1)
 
         # Header row
-        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
-        header.set_margin_bottom(12)
+        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        header.set_margin_bottom(10)
 
         self._waveform = _WaveformWidget()
         header.append(self._waveform)
@@ -619,47 +732,34 @@ class JarvisOverlay(Gtk.Window):
         self._status.set_valign(Gtk.Align.CENTER)
         header.append(self._status)
 
+        # Drag header to move window
+        drag = Gtk.GestureClick()
+        drag.set_button(1)
+        drag.connect("pressed", self._begin_drag)
+        header.add_controller(drag)
+
         self._panel.append(header)
 
-        self._user_lbl = Gtk.Label(label="")
-        self._user_lbl.add_css_class("user-label")
-        self._user_lbl.set_halign(Gtk.Align.START)
-        self._user_lbl.set_wrap(True)
-        self._user_lbl.set_max_width_chars(80)
-        self._user_lbl.set_visible(False)
-        self._panel.append(self._user_lbl)
+        hdr_sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        hdr_sep.add_css_class("header-sep")
+        self._panel.append(hdr_sep)
 
-        self._divider = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        self._divider.add_css_class("divider")
-        self._divider.set_visible(False)
-        self._panel.append(self._divider)
+        # Scrollable conversation log
+        self._scroll = Gtk.ScrolledWindow()
+        self._scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.ALWAYS)
+        self._scroll.set_min_content_height(60)
+        self._scroll.set_max_content_height(460)
+        self._scroll.set_propagate_natural_height(True)
+        self._scroll.set_kinetic_scrolling(True)
+        self._scroll.set_margin_top(14)
+        self._scroll.set_visible(False)
 
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scroll.set_max_content_height(240)
-        scroll.set_propagate_natural_height(True)
-        scroll.set_visible(False)
-        self._scroll = scroll
+        self._convo_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self._convo_box.set_margin_bottom(4)
+        self._scroll.set_child(self._convo_box)
+        self._panel.append(self._scroll)
 
-        self._resp_lbl = Gtk.Label(label="")
-        self._resp_lbl.add_css_class("response-label")
-        self._resp_lbl.set_halign(Gtk.Align.START)
-        self._resp_lbl.set_valign(Gtk.Align.START)
-        self._resp_lbl.set_wrap(True)
-        self._resp_lbl.set_max_width_chars(76)
-        self._resp_lbl.set_selectable(True)
-        scroll.set_child(self._resp_lbl)
-        self._panel.append(scroll)
-
-        # Chart area — hidden until show_chart() is called
-        self._chart_sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        self._chart_sep.add_css_class("divider")
-        self._chart_sep.set_visible(False)
-        self._panel.append(self._chart_sep)
-
-        self._chart = _ChartWidget()
-        self._chart.set_visible(False)
-        self._panel.append(self._chart)
+        self._panel.append(_ResizeGrip(self))
 
         outer.append(self._panel)
         self.set_child(outer)
@@ -670,32 +770,113 @@ class JarvisOverlay(Gtk.Window):
         self._panel.add_css_class(f"state-{state}")
         self._waveform.set_state(state)
 
-    # ── public state transitions (must be called on the main thread) ──
+    # ── session management ────────────────────────────────────────────────────
+
+    _MAX_VISUAL_BLOCKS = 15
+
+    def new_session(self):
+        """Clear the conversation log."""
+        child = self._convo_box.get_first_child()
+        while child:
+            nxt = child.get_next_sibling()
+            self._convo_box.remove(child)
+            child = nxt
+        self._current_block = None
+        self._blocks = []
+        self._scroll.set_visible(False)
+
+    def _prune_visual(self):
+        """Drop the oldest turn block (+ its separator) when over the limit."""
+        while len(self._blocks) > self._MAX_VISUAL_BLOCKS:
+            old = self._blocks.pop(0)
+            self._convo_box.remove(old)
+            # The separator that now leads the list is stale — remove it
+            first = self._convo_box.get_first_child()
+            if first and not isinstance(first, _MessageBlock):
+                self._convo_box.remove(first)
+
+    def _new_block(self, user_text: "str | None") -> _MessageBlock:
+        if self._convo_box.get_first_child() is not None:
+            sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+            sep.add_css_class("turn-sep")
+            self._convo_box.append(sep)
+        block = _MessageBlock(user_text=user_text)
+        self._convo_box.append(block)
+        self._blocks.append(block)
+        self._prune_visual()
+        self._scroll.set_visible(True)
+        self._current_block = block
+        self._fade_in(block)
+        self._scroll_bottom()
+        return block
+
+    def _fade_in(self, widget: Gtk.Widget):
+        def _step(op):
+            op = min(1.0, op + 0.08)
+            widget.set_opacity(op)
+            if op < 1.0:
+                GLib.timeout_add(16, _step, op)
+            return False
+        GLib.timeout_add(30, _step, 0.0)
+
+    def _scroll_bottom(self):
+        def _do():
+            adj = self._scroll.get_vadjustment()
+            adj.set_value(adj.get_upper() - adj.get_page_size())
+            return False
+        GLib.idle_add(_do)
+
+    # ── public API (must be called on GTK main thread) ────────────────────────
 
     def push_audio_level(self, rms: float):
         self._waveform.push_level(rms)
 
     def show_chart(self, data: dict) -> None:
-        self._chart.load(data)
-        self._chart.set_visible(True)
-        self._chart_sep.set_visible(True)
+        if self._current_block:
+            self._current_block.set_chart(data)
+            self._scroll_bottom()
 
     def clear_chart(self) -> None:
-        self._chart.clear()
-        self._chart.set_visible(False)
-        self._chart_sep.set_visible(False)
+        pass  # charts live inside their turn block and persist
 
     def show_listening(self):
         self._cancel_fade()
         self.set_opacity(1.0)
         self.set_visible(True)
-        self._user_lbl.set_visible(False)
-        self._divider.set_visible(False)
-        self._scroll.set_visible(False)
-        self._resp_lbl.set_text("")
-        self.clear_chart()
         self._set_state("listening")
         self._start_dot_blink()
+
+    def add_greeting(self, text: str):
+        block = self._new_block(user_text=None)
+        block.set_response(text)
+
+    def show_processing(self):
+        self._cancel_dot_blink()
+        self._status.set_text("PROCESSING")
+        self._set_state("processing")
+
+    def show_user_text(self, text: str):
+        self._new_block(user_text=text)
+        self._status.set_text("RESPONDING")
+        self._set_state("responding")
+
+    def show_tool(self, tool_name: str):
+        readable = tool_name.replace("_", " ").title()
+        self._status.set_text(f"⚙  {readable}")
+
+    def append_response(self, chunk: str):
+        if self._current_block:
+            self._current_block.append_response(chunk)
+            self._scroll_bottom()
+
+    def show_speaking(self):
+        self._status.set_text("SPEAKING")
+        self._set_state("speaking")
+
+    def schedule_hide(self, delay_ms: int = 5000):
+        GLib.timeout_add(delay_ms, self._begin_fade)
+
+    # ── blinking dot ──────────────────────────────────────────────────────────
 
     def _start_dot_blink(self):
         self._dot_on = True
@@ -704,7 +885,7 @@ class JarvisOverlay(Gtk.Window):
             self._dot_timer = GLib.timeout_add(700, self._dot_tick)
 
     def _dot_tick(self):
-        if self._waveform._live:  # still listening
+        if self._waveform._live:
             self._dot_on = not self._dot_on
             self._update_dot()
             return True
@@ -715,36 +896,7 @@ class JarvisOverlay(Gtk.Window):
         dot = "⬤ " if self._dot_on else "  "
         self._status.set_markup(f'<span foreground="#5599FF">{dot}</span>LISTENING')
 
-    def show_processing(self):
-        self._cancel_dot_blink()
-        self._status.set_text("PROCESSING")
-        self._set_state("processing")
-
-    def show_user_text(self, text: str):
-        self._user_lbl.set_text(f"You  →  {text}")
-        self._user_lbl.set_visible(True)
-        self._divider.set_visible(True)
-        self._scroll.set_visible(True)
-        self._status.set_text("RESPONDING")
-        self._set_state("responding")
-
-    def show_tool(self, tool_name: str):
-        readable = tool_name.replace("_", " ").title()
-        self._status.set_text(f"⚙  {readable}")
-
-    def append_response(self, chunk: str):
-        self._resp_lbl.set_text(self._resp_lbl.get_text() + chunk)
-        adj = self._scroll.get_vadjustment()
-        adj.set_value(adj.get_upper())
-
-    def show_speaking(self):
-        self._status.set_text("SPEAKING")
-        self._set_state("speaking")
-
-    def schedule_hide(self, delay_ms: int = 5000):
-        GLib.timeout_add(delay_ms, self._begin_fade)
-
-    # ── fade out ──
+    # ── fade out ──────────────────────────────────────────────────────────────
 
     def _cancel_dot_blink(self):
         if self._dot_timer:

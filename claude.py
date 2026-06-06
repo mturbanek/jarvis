@@ -2,7 +2,7 @@ from anthropic import Anthropic
 from config import MODEL, SYSTEM_PROMPT
 from tools import TOOL_DEFINITIONS, execute_tool
 
-_MAX_HISTORY = 30  # ~7-8 exchanges including tool calls
+_MAX_HISTORY = 40  # keep last ~10 real exchanges (tool calls add extra messages)
 
 
 class JarvisAI:
@@ -69,5 +69,15 @@ class JarvisAI:
         self.history = []
 
     def _trim_history(self):
-        if len(self.history) > _MAX_HISTORY:
-            self.history = self.history[-_MAX_HISTORY:]
+        if len(self.history) <= _MAX_HISTORY:
+            return
+        self.history = self.history[-_MAX_HISTORY:]
+        # After slicing, drop any leading messages until we reach a real user
+        # turn (string content). A slice boundary may land inside a tool-use
+        # exchange, leaving a stale tool_result as the first message — the API
+        # rejects that as an invalid history.
+        while self.history:
+            msg = self.history[0]
+            if msg.get("role") == "user" and isinstance(msg.get("content"), str):
+                break
+            self.history.pop(0)

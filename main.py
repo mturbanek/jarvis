@@ -10,12 +10,38 @@ warnings.filterwarnings(
     category=UserWarning,
 )
 
+import re
 import sys
 import signal
 import threading
 import datetime
 import json
 import pathlib
+
+
+def _for_tts(text: str) -> str:
+    """Strip markdown formatting so TTS doesn't read symbols aloud."""
+    # Fenced code blocks — drop entirely (not meaningful to read aloud)
+    text = re.sub(r'```[\s\S]*?```', 'code block.', text)
+    # Inline code — strip backticks, keep content
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    # Bold / italic markers
+    text = re.sub(r'\*{1,3}(.*?)\*{1,3}', r'\1', text, flags=re.DOTALL)
+    text = re.sub(r'_{1,3}(.*?)_{1,3}', r'\1', text, flags=re.DOTALL)
+    # ATX headers — strip # prefix
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    # Blockquotes
+    text = re.sub(r'^>\s?', '', text, flags=re.MULTILINE)
+    # Horizontal rules
+    text = re.sub(r'^[-*_]{3,}\s*$', '', text, flags=re.MULTILINE)
+    # Links — keep display text
+    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    # List bullets / numbers
+    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*\d+[.)]\s+', '', text, flags=re.MULTILINE)
+    # Collapse excess blank lines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
 
 import gi
 
@@ -294,8 +320,9 @@ class JarvisApp(Gtk.Application):
                     period = "Night"
                 GLib.idle_add(self.overlay.show_processing)
                 greeting = self._build_greeting(period)
+                GLib.idle_add(self.overlay.add_greeting, greeting)
                 GLib.idle_add(self.overlay.show_speaking)
-                speak(greeting)
+                speak(_for_tts(greeting))
 
             while not self._stop_event.is_set():
                 GLib.idle_add(self.overlay.show_listening)
@@ -320,13 +347,14 @@ class JarvisApp(Gtk.Application):
                 if not text:
                     continue
 
-                GLib.idle_add(self.overlay.show_user_text, text)
-
                 if _is_clear_command(text):
                     self._ai.clear_history()
+                    GLib.idle_add(self.overlay.new_session)
                     GLib.idle_add(self.overlay.show_speaking)
-                    speak("History cleared, Sir.")
+                    speak("History cleared, Sir.")  # plain text, no stripping needed
                     continue
+
+                GLib.idle_add(self.overlay.show_user_text, text)
 
                 response = self._ai.process(text, on_text=on_text, on_tool=on_tool)
 
@@ -335,7 +363,7 @@ class JarvisApp(Gtk.Application):
 
                 if response:
                     GLib.idle_add(self.overlay.show_speaking)
-                    speak(response)
+                    speak(_for_tts(response))
 
         except Exception as exc:
             print(f"[JARVIS] Pipeline error: {exc}")

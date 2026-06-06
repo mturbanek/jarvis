@@ -157,6 +157,27 @@ scrollbar slider {
 scrollbar slider:hover {
     background: rgba(100, 160, 255, 0.80);
 }
+
+.text-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(52, 140, 255, 0.22);
+    border-radius: 12px;
+    color: rgba(235, 245, 255, 0.92);
+    font-family: sans-serif;
+    font-size: 15px;
+    padding: 8px 14px;
+    caret-color: #3d8eff;
+    margin-top: 12px;
+    margin-bottom: 2px;
+}
+.text-input:focus {
+    border-color: rgba(52, 140, 255, 0.60);
+    box-shadow: 0 0 0 2px rgba(52, 140, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+}
+.text-input:disabled {
+    opacity: 0.22;
+}
 """
 
 _ALL_STATES = ("idle", "listening", "processing", "responding", "speaking")
@@ -746,11 +767,12 @@ class _MessageBlock(Gtk.Box):
 
 class JarvisOverlay(Gtk.Window):
 
-    def __init__(self, app: Gtk.Application):
+    def __init__(self, app: Gtk.Application, on_text_submit=None):
         super().__init__(application=app)
         self.set_decorated(False)
         self.set_resizable(True)
         self.add_css_class("jarvis-root")
+        self._on_text_submit = on_text_submit
 
         self._load_css()
         self._build_ui()
@@ -872,6 +894,15 @@ class JarvisOverlay(Gtk.Window):
         self._convo_box.set_margin_bottom(4)
         self._scroll.set_child(self._convo_box)
         self._panel.append(self._scroll)
+
+        # Text input row
+        self._text_entry = Gtk.Entry()
+        self._text_entry.add_css_class("text-input")
+        self._text_entry.set_placeholder_text("Type a message…")
+        self._text_entry.set_hexpand(True)
+        self._text_entry.set_sensitive(False)
+        self._text_entry.connect("activate", self._on_entry_activate)
+        self._panel.append(self._text_entry)
 
         self._panel.append(_ResizeGrip(self))
 
@@ -998,6 +1029,22 @@ class JarvisOverlay(Gtk.Window):
     def show_speaking(self):
         self._status.set_text("SPEAKING")
         self._set_state("speaking")
+
+    def enable_text_input(self):
+        self._text_entry.set_sensitive(True)
+        self._status.set_text("STANDBY")
+        self._set_state("idle")
+
+    def disable_text_input(self):
+        self._text_entry.set_sensitive(False)
+
+    def _on_entry_activate(self, entry: Gtk.Entry):
+        text = entry.get_text().strip()
+        if not text or not self._on_text_submit:
+            return
+        entry.set_text("")
+        self.disable_text_input()
+        self._on_text_submit(text)
 
     def schedule_hide(self, delay_ms: int = 5000):
         GLib.timeout_add(delay_ms, self._begin_fade)

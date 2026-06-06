@@ -15,6 +15,12 @@ Press **Ctrl+J** to start a session. JARVIS greets you with a context-aware mess
 - **Tool use** — Claude can run shell commands, open apps, set timers, check weather, find files, and more
 - **Charts** — ask JARVIS to graph CPU/RAM trends, disk usage, git stats, or any data it can access
 - **State-based UI** — overlay accent colour shifts per state (blue → listening, amber → processing, cyan → responding, purple → speaking)
+- **Scrollable conversation history** — full back-and-forth transcript with per-turn timestamps; persists across Ctrl+J presses until you say "clear history"
+- **Typing cursor** — blinking cursor animates while JARVIS streams a response, stops when done
+- **Scan lines + particle field** — subtle CRT scan-line overlay and drifting star-field for ambiance
+- **R2-D2 activation sound** — three quick swept chirps play on Ctrl+J
+- **Draggable + resizable window** — drag by the header, resize from the bottom-right grip
+- **Vision screen reading** — `read_screen` uses Claude's vision API instead of OCR; can describe UI, interpret charts, and answer specific questions about screen content
 - **5-second silence timeout** — session closes automatically if you stop talking
 
 ---
@@ -26,7 +32,7 @@ Press **Ctrl+J** to start a session. JARVIS greets you with a context-aware mess
 - `mpv` (audio playback)
 - An [Anthropic API key](https://console.anthropic.com/)
 - Your user in the `input` group (for Wayland hotkey support)
-- `flameshot` + `tesseract-ocr` (optional — required for the `read_screen` tool)
+- `flameshot` (optional — required for the `read_screen` tool; `grim` works on wlroots compositors)
 
 ---
 
@@ -92,7 +98,7 @@ All tunable settings are in `config.py`:
 | `set_timer` / `cancel_timer` / `list_timers` | Voice-announced countdown timers |
 | `get_weather` | Current weather for any city (no API key needed) |
 | `find_and_open` | Search files by name pattern, optionally open the match |
-| `read_screen` | Screenshot + OCR — read any text visible on screen |
+| `read_screen` | Screenshot + Claude vision — describe UI, read text, interpret charts; accepts an optional `query` |
 | `add_note` | Save a timestamped note to `~/notes.md` |
 | `read_notes` | Read your most recent notes |
 | `search_notes` | Search notes by keyword |

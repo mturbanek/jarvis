@@ -26,6 +26,7 @@ Press **Ctrl+J** to start a session. JARVIS greets you with a context-aware mess
 - `mpv` (audio playback)
 - An [Anthropic API key](https://console.anthropic.com/)
 - Your user in the `input` group (for Wayland hotkey support)
+- `flameshot` + `tesseract-ocr` (optional — required for the `read_screen` tool)
 
 ---
 

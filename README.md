@@ -23,8 +23,7 @@ Press **Ctrl+J** to start a session. JARVIS greets you with a context-aware mess
 - **Vision screen reading** — `read_screen` uses Claude's vision API instead of OCR; can describe UI, interpret charts, and answer specific questions about screen content
 - **Done sound** — low-high two-tone chime plays after each response so you know it's your turn
 - **GNOME launcher** — `.desktop` file for the app grid/dock; tray icon in the top bar (requires AppIndicator GNOME extension) with Activate and Quit menu items
-- **Persistent overlay** — the panel stays visible; no auto-hide or fade-out
-- **5-second silence timeout** — voice session ends automatically if you stop talking
+- **5-second silence timeout** — voice session ends automatically if you stop talking; overlay hides 3 seconds later
 
 ---
 

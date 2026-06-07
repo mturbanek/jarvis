@@ -893,9 +893,17 @@ class JarvisOverlay(Gtk.Window):
         self._convo_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._convo_box.set_margin_bottom(4)
         self._scroll.set_child(self._convo_box)
-        self._panel.append(self._scroll)
 
-        # Text input row
+        # Wrap only the scroll area in Gtk.Overlay for the particle field so
+        # widgets below (text entry, resize grip) are never under the overlay
+        # layer and receive input events normally.
+        scroll_overlay = Gtk.Overlay()
+        scroll_overlay.set_child(self._scroll)
+        particles = _ParticleField()
+        scroll_overlay.add_overlay(particles)
+        self._panel.append(scroll_overlay)
+
+        # Text input row — appended to panel directly, below the overlay
         self._text_entry = Gtk.Entry()
         self._text_entry.add_css_class("text-input")
         self._text_entry.set_placeholder_text("Type a message…")
@@ -906,13 +914,7 @@ class JarvisOverlay(Gtk.Window):
 
         self._panel.append(_ResizeGrip(self))
 
-        # Wrap panel in Gtk.Overlay so the particle field floats above content
-        panel_overlay = Gtk.Overlay()
-        panel_overlay.set_child(self._panel)
-        particles = _ParticleField()
-        panel_overlay.add_overlay(particles)
-
-        outer.append(panel_overlay)
+        outer.append(self._panel)
         self.set_child(outer)
 
     def _set_state(self, state: str):

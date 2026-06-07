@@ -158,26 +158,6 @@ scrollbar slider:hover {
     background: rgba(100, 160, 255, 0.80);
 }
 
-.text-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(52, 140, 255, 0.22);
-    border-radius: 12px;
-    color: rgba(235, 245, 255, 0.92);
-    font-family: sans-serif;
-    font-size: 15px;
-    padding: 8px 14px;
-    caret-color: #3d8eff;
-    margin-top: 12px;
-    margin-bottom: 2px;
-}
-.text-input:focus {
-    border-color: rgba(52, 140, 255, 0.60);
-    box-shadow: 0 0 0 2px rgba(52, 140, 255, 0.15);
-    background: rgba(255, 255, 255, 0.08);
-}
-.text-input:disabled {
-    opacity: 0.22;
-}
 """
 
 _ALL_STATES = ("idle", "listening", "processing", "responding", "speaking")
@@ -767,13 +747,11 @@ class _MessageBlock(Gtk.Box):
 
 class JarvisOverlay(Gtk.Window):
 
-    def __init__(self, app: Gtk.Application, on_text_submit=None):
+    def __init__(self, app: Gtk.Application):
         super().__init__(application=app)
         self.set_decorated(False)
         self.set_resizable(True)
-        self.set_title("JARVIS")
         self.add_css_class("jarvis-root")
-        self._on_text_submit = on_text_submit
 
         self._load_css()
         self._build_ui()
@@ -892,28 +870,17 @@ class JarvisOverlay(Gtk.Window):
         self._convo_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._convo_box.set_margin_bottom(4)
         self._scroll.set_child(self._convo_box)
-
-        # Wrap only the scroll area in Gtk.Overlay for the particle field so
-        # widgets below (text entry, resize grip) are never under the overlay
-        # layer and receive input events normally.
-        scroll_overlay = Gtk.Overlay()
-        scroll_overlay.set_child(self._scroll)
-        particles = _ParticleField()
-        scroll_overlay.add_overlay(particles)
-        self._panel.append(scroll_overlay)
-
-        # Text input row — appended to panel directly, below the overlay
-        self._text_entry = Gtk.Entry()
-        self._text_entry.add_css_class("text-input")
-        self._text_entry.set_placeholder_text("Type a message…")
-        self._text_entry.set_hexpand(True)
-        self._text_entry.set_sensitive(True)
-        self._text_entry.connect("activate", self._on_entry_activate)
-        self._panel.append(self._text_entry)
+        self._panel.append(self._scroll)
 
         self._panel.append(_ResizeGrip(self))
 
-        outer.append(self._panel)
+        # Wrap panel in Gtk.Overlay so the particle field floats above content
+        panel_overlay = Gtk.Overlay()
+        panel_overlay.set_child(self._panel)
+        particles = _ParticleField()
+        panel_overlay.add_overlay(particles)
+
+        outer.append(panel_overlay)
         self.set_child(outer)
 
     def _set_state(self, state: str):
@@ -994,7 +961,6 @@ class JarvisOverlay(Gtk.Window):
     def show_listening(self):
         self.set_visible(True)
         self.present()
-        self._xdotool_focus()
         self._set_state("listening")
         self._start_dot_blink()
 
@@ -1030,36 +996,6 @@ class JarvisOverlay(Gtk.Window):
     def show_speaking(self):
         self._status.set_text("SPEAKING")
         self._set_state("speaking")
-
-    def enable_text_input(self):
-        self.present()
-        self._text_entry.set_sensitive(True)
-        self._text_entry.grab_focus()
-        self._status.set_text("STANDBY")
-        self._set_state("idle")
-        self._xdotool_focus()
-
-    def _xdotool_focus(self):
-        import subprocess
-        try:
-            subprocess.Popen(
-                ["xdotool", "search", "--sync", "--name", "JARVIS", "windowfocus"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except FileNotFoundError:
-            pass
-
-    def disable_text_input(self):
-        self._text_entry.set_sensitive(False)
-
-    def _on_entry_activate(self, entry: Gtk.Entry):
-        text = entry.get_text().strip()
-        if not text or not self._on_text_submit:
-            return
-        entry.set_text("")
-        self.disable_text_input()
-        self._on_text_submit(text)
 
     # ── blinking dot ──────────────────────────────────────────────────────────
 

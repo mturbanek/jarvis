@@ -164,7 +164,7 @@ class JarvisApp(Gtk.Application):
     # ── GTK lifecycle ──
 
     def do_activate(self):
-        self.overlay = JarvisOverlay(self, on_text_submit=self._handle_text_submit)
+        self.overlay = JarvisOverlay(self)
         self.overlay.present()
         self.overlay.set_visible(False)
 
@@ -397,45 +397,9 @@ class JarvisApp(Gtk.Application):
             return
         self._stop_event.clear()
         self._processing = True
-        self.overlay.disable_text_input()
         threading.Thread(target=_play_activation_sound, daemon=True).start()
         self.overlay.show_listening()
         threading.Thread(target=self._pipeline, daemon=True).start()
-
-    # ── text-input path ──────────────────────────────────────────────────────
-
-    def _handle_text_submit(self, text: str):
-        """Called on the GTK main thread when the user submits typed input."""
-        if self._processing:
-            return
-        if _is_clear_command(text):
-            self._ai.clear_history()
-            self.overlay.new_session()
-            self.overlay.enable_text_input()
-            return
-        self._processing = True
-        self.overlay.set_visible(True)
-        self.overlay.show_processing()
-        threading.Thread(target=self._text_pipeline, args=(text,), daemon=True).start()
-
-    def _text_pipeline(self, text: str):
-        def on_text(chunk):
-            GLib.idle_add(self.overlay.append_response, chunk)
-        def on_tool(name, _args):
-            GLib.idle_add(self.overlay.show_tool, name)
-        try:
-            GLib.idle_add(self.overlay.show_user_text, text)
-            response = self._ai.process(text, on_text=on_text, on_tool=on_tool)
-            GLib.idle_add(self.overlay.finish_response)
-            if response:
-                GLib.idle_add(self.overlay.show_speaking)
-                speak(_for_tts(response))
-                threading.Thread(target=_play_done_sound, daemon=True).start()
-        except Exception as exc:
-            print(f"[JARVIS] Text pipeline error: {exc}")
-        finally:
-            self._processing = False
-            GLib.idle_add(self.overlay.enable_text_input)
 
     # ── voice pipeline (runs in background thread) ──
 
@@ -513,7 +477,6 @@ class JarvisApp(Gtk.Application):
         finally:
             self._processing = False
             threading.Thread(target=self._save_session_summary, daemon=True).start()
-            GLib.idle_add(self.overlay.enable_text_input)
 
 
 def main():

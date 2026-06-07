@@ -21,10 +21,11 @@ Press **Ctrl+J** to start a voice session, or type directly into the overlay tex
 - **R2-D2 activation sound** — three quick swept chirps play on Ctrl+J
 - **Draggable + resizable window** — drag by the header, resize from the bottom-right grip
 - **Vision screen reading** — `read_screen` uses Claude's vision API instead of OCR; can describe UI, interpret charts, and answer specific questions about screen content
-- **Typed input** — text box at the bottom of the overlay; disabled during voice, enabled when a session ends so you can follow up without speaking
+- **Typed input** — text box at the bottom of the overlay; always available when JARVIS isn't actively listening, so you can follow up without speaking
 - **Done sound** — low-high two-tone chime plays after each response so you know it's your turn
 - **GNOME launcher** — `.desktop` file for the app grid/dock; tray icon in the top bar (requires AppIndicator GNOME extension) with Activate and Quit menu items
-- **5-second silence timeout** — session closes automatically if you stop talking
+- **Persistent overlay** — the panel stays visible; no auto-hide or fade-out
+- **5-second silence timeout** — voice session ends automatically if you stop talking
 
 ---
 
@@ -85,7 +86,6 @@ All tunable settings are in `config.py`:
 | `WHISPER_MODEL` | `base` | Whisper STT size (`tiny` → `base` → `small` → `medium`) |
 | `TTS_VOICE` | `en-GB-RyanNeural` | Edge TTS voice |
 | `HOTKEY` | `<ctrl>+j` | Global trigger key |
-| `OVERLAY_LINGER_MS` | `5000` | How long the overlay stays visible after a response |
 
 ---
 

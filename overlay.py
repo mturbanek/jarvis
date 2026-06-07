@@ -997,6 +997,17 @@ class JarvisOverlay(Gtk.Window):
         self._status.set_text("SPEAKING")
         self._set_state("speaking")
 
+    def session_ended(self):
+        """Called when the voice session ends — reset state and hide the overlay."""
+        self._cancel_dot_blink()
+        self._status.set_text("STANDBY")
+        self._set_state("idle")
+        GLib.timeout_add(3000, self._hide)
+
+    def _hide(self):
+        self.set_visible(False)
+        return False
+
     # ── blinking dot ──────────────────────────────────────────────────────────
 
     def _start_dot_blink(self):

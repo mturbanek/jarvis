@@ -477,6 +477,7 @@ class JarvisApp(Gtk.Application):
         finally:
             self._processing = False
             threading.Thread(target=self._save_session_summary, daemon=True).start()
+            GLib.idle_add(self.overlay.session_ended)
 
 
 def main():

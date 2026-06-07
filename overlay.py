@@ -771,6 +771,7 @@ class JarvisOverlay(Gtk.Window):
         super().__init__(application=app)
         self.set_decorated(False)
         self.set_resizable(True)
+        self.set_title("JARVIS")
         self.add_css_class("jarvis-root")
         self._on_text_submit = on_text_submit
 
@@ -993,6 +994,7 @@ class JarvisOverlay(Gtk.Window):
     def show_listening(self):
         self.set_visible(True)
         self.present()
+        self._xdotool_focus()
         self._set_state("listening")
         self._start_dot_blink()
 
@@ -1035,6 +1037,15 @@ class JarvisOverlay(Gtk.Window):
         self._text_entry.grab_focus()
         self._status.set_text("STANDBY")
         self._set_state("idle")
+        self._xdotool_focus()
+
+    def _xdotool_focus(self):
+        import subprocess
+        subprocess.Popen(
+            ["xdotool", "search", "--sync", "--name", "JARVIS", "windowfocus"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     def disable_text_input(self):
         self._text_entry.set_sensitive(False)

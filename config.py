@@ -33,8 +33,6 @@ TTS_VOICE = "en-GB-RyanNeural"
 # Global hotkey to trigger Jarvis
 HOTKEY = "<ctrl>+j"
 
-# How long (ms) the overlay lingers after responding before fading
-OVERLAY_LINGER_MS = 5000
 
 SYSTEM_PROMPT = """\
 You are JARVIS (Just A Rather Very Intelligent System), an AI assistant embedded in a \

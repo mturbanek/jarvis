@@ -778,8 +778,6 @@ class JarvisOverlay(Gtk.Window):
         self._build_ui()
         self._setup_positioning()
 
-        self._fade_opacity = 1.0
-        self._fade_timer = None
         self._dot_timer = None
         self._dot_on = True
         self._current_block: "_MessageBlock | None" = None
@@ -993,8 +991,6 @@ class JarvisOverlay(Gtk.Window):
         pass  # charts live inside their turn block and persist
 
     def show_listening(self):
-        self._cancel_fade()
-        self.set_opacity(1.0)
         self.set_visible(True)
         self.present()
         self._set_state("listening")
@@ -1034,9 +1030,7 @@ class JarvisOverlay(Gtk.Window):
         self._set_state("speaking")
 
     def enable_text_input(self):
-        self._cancel_fade()           # keep overlay visible while entry is usable
-        self.set_opacity(1.0)
-        self.present()                # ask compositor to focus this window
+        self.present()
         self._text_entry.set_sensitive(True)
         self._text_entry.grab_focus()
         self._status.set_text("STANDBY")
@@ -1052,9 +1046,6 @@ class JarvisOverlay(Gtk.Window):
         entry.set_text("")
         self.disable_text_input()
         self._on_text_submit(text)
-
-    def schedule_hide(self, delay_ms: int = 5000):
-        GLib.timeout_add(delay_ms, self._begin_fade)
 
     # ── blinking dot ──────────────────────────────────────────────────────────
 
@@ -1076,32 +1067,7 @@ class JarvisOverlay(Gtk.Window):
         dot = "⬤ " if self._dot_on else "  "
         self._status.set_markup(f'<span foreground="#5599FF">{dot}</span>LISTENING')
 
-    # ── fade out ──────────────────────────────────────────────────────────────
-
     def _cancel_dot_blink(self):
         if self._dot_timer:
             GLib.source_remove(self._dot_timer)
             self._dot_timer = None
-
-    def _begin_fade(self) -> bool:
-        self._cancel_dot_blink()
-        self._fade_opacity = 1.0
-        self._set_state("idle")
-        self._fade_timer = GLib.timeout_add(35, self._fade_step)
-        return False
-
-    def _fade_step(self) -> bool:
-        self._fade_opacity -= 0.04
-        if self._fade_opacity <= 0:
-            self.set_visible(False)
-            self.set_opacity(1.0)
-            self._fade_timer = None
-            return False
-        self.set_opacity(self._fade_opacity)
-        return True
-
-    def _cancel_fade(self):
-        if self._fade_timer:
-            GLib.source_remove(self._fade_timer)
-            self._fade_timer = None
-        self.set_opacity(1.0)

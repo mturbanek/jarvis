@@ -127,7 +127,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk, GLib
 
-from config import ANTHROPIC_API_KEY, HOTKEY, OVERLAY_LINGER_MS, MODEL
+from config import ANTHROPIC_API_KEY, HOTKEY, MODEL
 from overlay import JarvisOverlay
 from recorder import record_voice
 from stt import transcribe, prewarm as stt_prewarm
@@ -436,7 +436,6 @@ class JarvisApp(Gtk.Application):
         finally:
             self._processing = False
             GLib.idle_add(self.overlay.enable_text_input)
-            GLib.idle_add(self.overlay.schedule_hide, OVERLAY_LINGER_MS)
 
     # ── voice pipeline (runs in background thread) ──
 
@@ -515,8 +514,6 @@ class JarvisApp(Gtk.Application):
             self._processing = False
             threading.Thread(target=self._save_session_summary, daemon=True).start()
             GLib.idle_add(self.overlay.enable_text_input)
-            # enable_text_input cancels any fade; overlay stays open for typed follow-up.
-            # schedule_hide is called again after a text response (in _text_pipeline).
 
 
 def main():

@@ -1041,11 +1041,14 @@ class JarvisOverlay(Gtk.Window):
 
     def _xdotool_focus(self):
         import subprocess
-        subprocess.Popen(
-            ["xdotool", "search", "--sync", "--name", "JARVIS", "windowfocus"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        try:
+            subprocess.Popen(
+                ["xdotool", "search", "--sync", "--name", "JARVIS", "windowfocus"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            pass
 
     def disable_text_input(self):
         self._text_entry.set_sensitive(False)

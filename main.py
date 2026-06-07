@@ -9,6 +9,11 @@ warnings.filterwarnings(
     message="resource_tracker: There appear to be",
     category=UserWarning,
 )
+warnings.filterwarnings(
+    "ignore",
+    message="GLib.unix_signal_add is deprecated",
+    category=DeprecationWarning,
+)
 
 import math
 import os

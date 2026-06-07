@@ -908,7 +908,7 @@ class JarvisOverlay(Gtk.Window):
         self._text_entry.add_css_class("text-input")
         self._text_entry.set_placeholder_text("Type a message…")
         self._text_entry.set_hexpand(True)
-        self._text_entry.set_sensitive(False)
+        self._text_entry.set_sensitive(True)
         self._text_entry.connect("activate", self._on_entry_activate)
         self._panel.append(self._text_entry)
 
@@ -996,6 +996,7 @@ class JarvisOverlay(Gtk.Window):
         self._cancel_fade()
         self.set_opacity(1.0)
         self.set_visible(True)
+        self.present()
         self._set_state("listening")
         self._start_dot_blink()
 
@@ -1033,7 +1034,11 @@ class JarvisOverlay(Gtk.Window):
         self._set_state("speaking")
 
     def enable_text_input(self):
+        self._cancel_fade()           # keep overlay visible while entry is usable
+        self.set_opacity(1.0)
+        self.present()                # ask compositor to focus this window
         self._text_entry.set_sensitive(True)
+        self._text_entry.grab_focus()
         self._status.set_text("STANDBY")
         self._set_state("idle")
 

@@ -515,7 +515,8 @@ class JarvisApp(Gtk.Application):
             self._processing = False
             threading.Thread(target=self._save_session_summary, daemon=True).start()
             GLib.idle_add(self.overlay.enable_text_input)
-            GLib.idle_add(self.overlay.schedule_hide, OVERLAY_LINGER_MS)
+            # enable_text_input cancels any fade; overlay stays open for typed follow-up.
+            # schedule_hide is called again after a text response (in _text_pipeline).
 
 
 def main():
